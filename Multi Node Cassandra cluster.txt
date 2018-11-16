@@ -1,0 +1,71 @@
+Setting up Multi Node Cassandra cluster on a single Windows Machine.
+1.	Downloads
+2.	Raise TARMAC and Remedy to download below:
+
+        JDK1.8 ,Python 2.7 and Apache Cassandra 3.9 from Raise TARMAC and Remedy.
+
+Note: Ensure Python version is 2.7. Not more, not less.
+Using a Python version above 2.7 will throw syntax errors due to compatibility issues between Cassandra and Python.
+2.  Edit "hosts" file from available at "C:\Windows\System32\drivers\etc\". You will need admin permission to edit this file.
+The content of file should look as below:
+#Cassandra Nodes
+127.0.0.1            127.0.0.2
+127.0.0.1            127.0.0.3
+# You can add more nodes like this.
+3. Create below folder structure on your Disk.
+C:\cassandra\1
+C:\cassandra\2
+C:\cassandra\3
+4.  Extract Cassandra "apache-cassandra-3.9-bin.tar.gz" download once and copy entire structure (bin,conf,doc,interface,javadoc,lib,pylib,tools, .....) in each folder (C:\cassandra\1,C:\cassandra\2 and C:\cassandra\3) . So that 3 different cassandra instances can be started later.
+5.  Alter all the 3 cassandra.yaml file from below locations.
+             C:\cassandra\1\conf\cassandra.yaml
+C:\cassandra\2\conf\cassandra.yaml
+C:\cassandra\3\conf\cassandra.yaml
+6. Give the cluster name a meaningful value.
+cluster_name: ‘TmpCluster’
+Note: a. Parameter name should be in all-small, and should not have leading spaces (“ “). Leading spaces will throw syntax error. 
+b. Value can be anything, preferably like the one shown above. 
+c. All nodes should have the same cluster_name.
+7. First and second node will be marked as seed nodes so change auto_bootstrap to false for these two and true for others. Add it to the bottom of the file, if not present already.
+auto_bootstrap: false
+8.  Specify Seeds under seed_provider. Out of N number of nodes specify at least 2 seed nodes. Choose any two IP address.
+       seeds: “127.0.0.1,127.0.0.2”
+9.  Setup data, commitlog and save caches path.
+data_file_directories : /cassandra/1/var/lib/Cassandra/data
+commitlog_directory: /cassandra/1/var/lib/Cassandra/commitlog
+saved_caches_directory: /cassandra/1/var/lib/Cassandra/saved_caches
+Make sure you change “1” to “2” and “3” for other nodes
+Try to maintain the orignal format of the existing parameters. Leading spaces and tabs will cause syntax errors.
+
+10. Change listen and rpc address for all nodes.
+listen_address: 127.0.0.1
+rpc_address: 127.0.0.1
+Accordingly use “.2” and “.3” for node “2” and “3”.
+11.  Edit ./bin/cassandra.bat file, for each node change port from default 7199 to something unique for each node.
+For node “1” Dcom.sun.management.jmxremote.port=7199
+For node “2”  Dcom.sun.management.jmxremote.port=8199
+For node “3”   Dcom.sun.management.jmxremote.port=9199
+12.  Once you have edited cassandra.bat go to each of your bin folders and double click cassandra.bat to start each node. 
+(OR) Execute the below command, for detailed info:
+C:\cassandra\1\bin> cassandra -f
+Troubleshooting Memory issue:
+If you encounter any memory issue as show in the snapshot below, 
+
+ 
+Edit the ./bin/cassandra.bat file, change the JAVA_OPTS value of Xms2G^ (highlighted below) to a lesser value like Xms1G^ or Xms512M^ and execute the cassandra.bat file again.
+set JAVA_OPTS=-ea^
+ -javaagent:"%CASSANDRA_HOME%\lib\jamm-0.3.0.jar"^
+ -Xms1G^
+ -Xmx1G^
+-XX:+HeapDumpOnOutOfMemoryError^
+…
+
+14.  Verify cluster
+C:\cassandra\1\bin> nodetool –p 7199 –h 127.0.0.1 ring
+For more info, see: nodetool help
+15. Open cqlsh window by typing the command
+C:\cassandra\1\bin> cqlsh
+Alternatively, you can download DataStax DevCenter for Windows and connect to your cluster. Link:
+DataStax DevCenter 
+Download
+Raise a TARMAC request. You may NOT need admin rights to download and extract.
